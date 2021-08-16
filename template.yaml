@@ -1,0 +1,51 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: 'AWS::Serverless-2016-10-31'
+
+Description: A simple stack for AWS Codepipeline.
+
+Parameters:
+  Stage:
+    Description: 'Stage to which the resources will be deployed into.'
+    Type: 'String'
+    Default: 'dev'
+  ProjectName:
+    Description: 'The project that these resources are for.'
+    Type: 'String'
+    Default: ''
+  ResourceGroup:
+    Description: 'The resource group which these resources are part of.'
+    Type: 'String'
+    Default: ''
+  ProducerAccountId:
+    Description: 'The 12 character AWS Account ID that will upload data into the Raw bucket.'
+    Type: 'String'
+    Default: ''
+
+###########################################################################
+#  Labelling
+###########################################################################
+Metadata:
+  'AWS::CloudFormation::Interface':
+    ParameterGroups:
+      - Label:
+          default: General
+        Parameters:
+          - Stage
+          - ProjectName
+          - ResourceGroup
+Resources:
+  HelloWorldLambda:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      FunctionName: !Sub "${Stage}-${ResourceGroup}-hello-world-function"
+      Handler: hello_world.lambda_handler
+      Runtime: python3.8
+      CodeUri: ./src/hello_world.py
+      Description: Says hello to world.
+      MemorySize: 128
+      Timeout: 100
+      Role: !GetAtt StartFileProcessingRole.Arn
+      Tags:
+        Stage: !Ref Stage
+        ProjectName: !Ref ProjectName
+        ResourceGroup: !Ref ResourceGroup
