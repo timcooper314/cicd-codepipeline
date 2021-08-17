@@ -1,8 +1,7 @@
-#!/bin/bash
 
-#STAGE="test"
-#PROJECT_NAME="tc"
-#RESOURCE_GROUP="pipeline"
+STAGE="test"
+PROJECT_NAME="tc"
+RESOURCE_GROUP="pipeline"
 STACK_NAME="${STAGE}-${PROJECT_NAME}-${RESOURCE_GROUP}"
 BUCKET_NAME="test-tc-pipeline-artifacts"
 
