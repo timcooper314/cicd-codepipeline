@@ -1,8 +1,8 @@
 #!/bin/bash
 
-STAGE="test"
-PROJECT_NAME="tc"
-RESOURCE_GROUP="pipeline"
+#STAGE="test"
+#PROJECT_NAME="tc"
+#RESOURCE_GROUP="pipeline"
 STACK_NAME="${STAGE}-${PROJECT_NAME}-${RESOURCE_GROUP}"
 BUCKET_NAME="test-tc-pipeline-artifacts"
 
@@ -12,8 +12,8 @@ SUBNET_LIST="subnet-cf6b85a9"
 #pip install awscli aws-sam-cli
 #echo "Dependencies successfully installed!"
 
-chmod 644 $(find . -type f)
-chmod 755 $(find . -type d)
+#chmod 644 $(find . -type f)
+#chmod 755 $(find . -type d)
 
 mkdir -p dist/
 
