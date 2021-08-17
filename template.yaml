@@ -16,8 +16,15 @@ Parameters:
     Description: 'The resource group which these resources are part of.'
     Type: 'String'
     Default: ''
-  ProducerAccountId:
-    Description: 'The 12 character AWS Account ID that will upload data into the Raw bucket.'
+#  ProducerAccountId:
+#    Description: 'The 12 character AWS Account ID that will upload data into the Raw bucket.'
+#    Type: 'String'
+#    Default: ''
+  Subnets:
+    Description: Requires 2+ to meet availability zone coverage requirement.
+    Type: List<AWS::EC2::Subnet::Id>
+  SecurityGroupId:
+    Description: 'The Id of the security group to use for these functions.'
     Type: 'String'
     Default: ''
 
@@ -33,6 +40,12 @@ Metadata:
           - Stage
           - ProjectName
           - ResourceGroup
+      - Label:
+          default: Network Configuration
+        Parameters:
+          - Subnets
+          - SecurityGroupId
+
 Resources:
   HelloWorldLambda:
     Type: 'AWS::Serverless::Function'
@@ -44,8 +57,35 @@ Resources:
       Description: Says hello to world.
       MemorySize: 128
       Timeout: 100
-      Role: !GetAtt StartFileProcessingRole.Arn
+      Role: !GetAtt HelloWorldRole.Arn
+      VpcConfig:
+        SecurityGroupIds:
+          - !Ref SecurityGroupId
+        SubnetIds: !Ref Subnets
       Tags:
         Stage: !Ref Stage
         ProjectName: !Ref ProjectName
         ResourceGroup: !Ref ResourceGroup
+
+  HelloWorldRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      RoleName: !Sub "${Stage}HelloWorldRole"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action: "sts:AssumeRole"
+      Path: "/"
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole'
+      Tags:
+        - Key: Stage
+          Value: !Ref Stage
+        - Key: ProjectName
+          Value: !Ref ProjectName
+        - Key: ResourceGroup
+          Value: !Ref ResourceGroup
