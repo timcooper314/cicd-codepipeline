@@ -25,16 +25,16 @@ phases:
   build:
     commands:
       - export STACK_NAME="${STAGE}-${PROJECT_NAME}-${RESOURCE_GROUP}"
-      - mkdir -p dist/
       - |
         sam package \
           --template-file template.yaml \
           --s3-bucket ${BUCKET_NAME} \
-          --output-template-file dist/packaged.yaml \
+          --output-template-file packaged.yaml \
           --s3-prefix "${PROJECT_NAME}-${RESOURCE_GROUP}"
+      - echo "Packaging complete."
       - |
         sam deploy \
-          --template-file dist/packaged.yaml \
+          --template-file packaged.yaml \
           --stack-name ${STACK_NAME} \
           --parameter-overrides Stage=${STAGE} ProjectName=${PROJECT_NAME} ResourceGroup=${RESOURCE_GROUP} SecurityGroupId=${SECURITY_GROUP_ID} Subnets=${SUBNET_LIST}  \
           --s3-bucket ${BUCKET_NAME} \
@@ -56,9 +56,9 @@ phases:
     #base-directory: location
     #discard-paths: yes
     #file-format: JunitXml | CucumberJson
-#artifacts:
-  #files:
-    # - location
+artifacts:
+  files:
+     - packaged.yaml
     # - location
   #name: $(date +%Y-%m-%d)
   #discard-paths: yes
