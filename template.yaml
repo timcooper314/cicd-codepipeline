@@ -16,10 +16,6 @@ Parameters:
     Description: 'The resource group which these resources are part of.'
     Type: 'String'
     Default: ''
-#  ProducerAccountId:
-#    Description: 'The 12 character AWS Account ID that will upload data into the Raw bucket.'
-#    Type: 'String'
-#    Default: ''
   Subnets:
     Description: Requires 2+ to meet availability zone coverage requirement.
     Type: List<AWS::EC2::Subnet::Id>
