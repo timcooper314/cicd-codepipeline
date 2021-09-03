@@ -58,9 +58,9 @@ phases:
     #base-directory: location
     #discard-paths: yes
     #file-format: JunitXml | CucumberJson
-artifacts:
-  files:
-     - packaged.yaml
+#artifacts:
+#  files:
+#     - packaged.yaml
     # - location
   #name: $(date +%Y-%m-%d)
   #discard-paths: yes
