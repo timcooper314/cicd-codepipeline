@@ -142,6 +142,8 @@ Resources:
                   - iam:GetRole
                   - iam:PassRole
                   - iam:ListRoles
+                  - iam:CreateRole
+                  - iam:AttachRolePolicy
                   - logs:*
                   - lambda:*
                   - cloudformation:*
