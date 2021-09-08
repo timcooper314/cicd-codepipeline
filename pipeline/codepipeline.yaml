@@ -68,15 +68,6 @@ Resources:
                 Effect: Allow
                 Action:
                   - codepipeline:*
-#                  - codepipeline:GetJobDetails
-#                  - codepipeline:GetPipeline
-#                  - codepipeline:GetPipelineExecution
-#                  - codepipeline:GetPipelineState
-#                  - codepipeline:ListPipelineExecutions
-#                  - codepipeline:ListPipelines
-#                  - codepipeline:RetryStageExecution
-#                  - codepipeline:StartPipelineExecution
-#                  - codepipeline:UpdatePipeline
                 Resource: !Sub arn:aws:codepipeline:${AWS::Region}:${AWS::AccountId}:${Stage}-${ProjectName}-${ResourceGroup}-pipeline # Codepipeline not yet created, but requires the role
               -
                 Effect: Allow
@@ -89,13 +80,6 @@ Resources:
                 Effect: Allow
                 Action:
                   - codebuild:*
-#                  - codebuild:BatchGetBuilds
-#                  - codebuild:ListBuilds
-#                  - codebuild:ListProjects
-#                  - codebuild:ListRepositories
-#                  - codebuild:StartBuild
-#                  - codebuild:UpdateProject
-#                  - codebuild:UpdateReport
                 Resource: !Sub arn:aws:codebuild:${AWS::Region}:${AWS::AccountId}:project/${Stage}-${ProjectName}-${ResourceGroup}-build-project # Codepipeline not yet created, but requires the role
               -
                 Effect: Allow
