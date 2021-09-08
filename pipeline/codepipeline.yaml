@@ -160,6 +160,7 @@ Resources:
                   - s3:CreateJob
                   - s3:HeadBucket
                   - s3:GetBucketLocation
+                  - s3:PutObject
                 Resource: "*"
               -
                 Effect: Allow

@@ -13,7 +13,8 @@ echo "AWS SAM packaging..."
 sam package \
   --template-file ./stack1.yaml \
   --output-template-file stack1Deploy.yaml \
-  --s3-bucket ${BUCKET_NAME}
+  --s3-bucket ${BUCKET_NAME} \
+  --s3-prefix "${STACK_NAME}"
 
 echo "AWS SAM deploying..."
 sam deploy \
