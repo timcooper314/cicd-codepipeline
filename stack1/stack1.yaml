@@ -16,31 +16,31 @@ Parameters:
     Description: 'The resource group which these resources are part of.'
     Type: 'String'
     Default: ''
-  Subnets:
-    Description: Requires 2+ to meet availability zone coverage requirement.
-    Type: List<AWS::EC2::Subnet::Id>
-  SecurityGroupId:
-    Description: 'The Id of the security group to use for these functions.'
-    Type: 'String'
-    Default: ''
+#  Subnets:
+#    Description: Requires 2+ to meet availability zone coverage requirement.
+#    Type: List<AWS::EC2::Subnet::Id>
+#  SecurityGroupId:
+#    Description: 'The Id of the security group to use for these functions.'
+#    Type: 'String'
+#    Default: ''
 
 ###########################################################################
 #  Labelling
 ###########################################################################
-Metadata:
-  'AWS::CloudFormation::Interface':
-    ParameterGroups:
-      - Label:
-          default: General
-        Parameters:
-          - Stage
-          - ProjectName
-          - ResourceGroup
-      - Label:
-          default: Network Configuration
-        Parameters:
-          - Subnets
-          - SecurityGroupId
+#Metadata:
+#  'AWS::CloudFormation::Interface':
+#    ParameterGroups:
+#      - Label:
+#          default: General
+#        Parameters:
+#          - Stage
+#          - ProjectName
+#          - ResourceGroup
+#      - Label:
+#          default: Network Configuration
+#        Parameters:
+#          - Subnets
+#          - SecurityGroupId
 
 Resources:
   HelloWorldLambda:
@@ -54,10 +54,10 @@ Resources:
       MemorySize: 128
       Timeout: 100
       Role: !GetAtt HelloWorldRole.Arn
-      VpcConfig:
-        SecurityGroupIds:
-          - !Ref SecurityGroupId
-        SubnetIds: !Ref Subnets
+#      VpcConfig:
+#        SecurityGroupIds:
+#          - !Ref SecurityGroupId
+#        SubnetIds: !Ref Subnets
       Tags:
         Stage: !Ref Stage
         ProjectName: !Ref ProjectName

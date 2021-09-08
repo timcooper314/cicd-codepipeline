@@ -1,0 +1,268 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Creates a code pipeline for code deployment.
+Parameters:
+  Stage:
+    Description: 'Stage to which the resources will be deployed into.'
+    Type: 'String'
+    Default: 'dev'
+  ProjectName:
+    Description: 'The project that these resources are for.'
+    Type: 'String'
+    Default: ''
+  ResourceGroup:
+    Description: 'The resource group which these resources are part of.'
+    Type: 'String'
+    Default: ''
+  GitHubOAuthToken:
+    Description: OAuth token used by AWS CodePipeline to connect to GitHub
+    NoEcho: true
+    Type: String
+    Default: ''
+  GitHubOwner:
+    Description: GitHub username owning the repo
+    Type: String
+    Default: ''
+  GitHubRepo:
+    Description: GitHub repo name
+    Type: String
+    Default: ''
+  GitHubBranch:
+    Description: GitHub repo branch name. It defaults to master if not specified.
+    Type: String
+    Default: master
+
+Resources:
+  ArtifactS3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub ${Stage}-${ProjectName}-${ResourceGroup}-artifacts-store
+      Tags:
+        - Key: Stage
+          Value: !Ref Stage
+        - Key: Project Name
+          Value: !Ref ProjectName
+        - Key: ResourceGroup
+          Value: !Ref ResourceGroup
+
+  PipelineRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub ${Stage}-${ProjectName}-${ResourceGroup}-pipeline-role
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Principal:
+              Service:
+                - codepipeline.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Policies:
+        -
+          PolicyName: !Sub ${Stage}-${ProjectName}-${ResourceGroup}-pipeline-policy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              -
+                Effect: Allow
+                Action:
+                  - codepipeline:*
+#                  - codepipeline:GetJobDetails
+#                  - codepipeline:GetPipeline
+#                  - codepipeline:GetPipelineExecution
+#                  - codepipeline:GetPipelineState
+#                  - codepipeline:ListPipelineExecutions
+#                  - codepipeline:ListPipelines
+#                  - codepipeline:RetryStageExecution
+#                  - codepipeline:StartPipelineExecution
+#                  - codepipeline:UpdatePipeline
+                Resource: !Sub arn:aws:codepipeline:${AWS::Region}:${AWS::AccountId}:${Stage}-${ProjectName}-${ResourceGroup}-pipeline # Codepipeline not yet created, but requires the role
+              -
+                Effect: Allow
+                Action:
+                  - s3:*
+                Resource:
+                  - !GetAtt ArtifactS3Bucket.Arn
+                  - !Sub ${ArtifactS3Bucket.Arn}/*
+              -
+                Effect: Allow
+                Action:
+                  - codebuild:*
+#                  - codebuild:BatchGetBuilds
+#                  - codebuild:ListBuilds
+#                  - codebuild:ListProjects
+#                  - codebuild:ListRepositories
+#                  - codebuild:StartBuild
+#                  - codebuild:UpdateProject
+#                  - codebuild:UpdateReport
+                Resource: !Sub arn:aws:codebuild:${AWS::Region}:${AWS::AccountId}:project/${Stage}-${ProjectName}-${ResourceGroup}-build-project # Codepipeline not yet created, but requires the role
+              -
+                Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                  - cloudformation:*
+                  - iam:PassRole
+                  - codecommit:*
+                Resource: "*"
+      Tags:
+        - Key: Stage
+          Value: !Ref Stage
+        - Key: Project Name
+          Value: !Ref ProjectName
+        - Key: ResourceGroup
+          Value: !Ref ResourceGroup
+
+
+  BuildProjectRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub ${Stage}-${ProjectName}-${ResourceGroup}-build-project-role
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Principal:
+              Service:
+                - codebuild.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Policies:
+        -
+          PolicyName: !Sub ${Stage}-${ProjectName}-${ResourceGroup}-build-project-policy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              -
+                Effect: Allow
+                Action:
+                  - iam:GetRole
+                  - iam:PassRole
+                  - iam:ListRoles
+                  - logs:*
+                  - lambda:*
+                  - cloudformation:*
+                  - codebuild:*
+                  - cloudwatch:*
+                Resource: "*"
+              -
+                Effect: Allow
+                Action:
+                  - s3:GetAccessPoint
+                  - s3:PutAccountPublicAccessBlock
+                  - s3:ListAccessPoints
+                  - s3:GetAccountPublicAccessBlock
+                  - s3:ListAllMyBuckets
+                  - s3:ListJobs
+                  - s3:CreateJob
+                  - s3:HeadBucket
+                  - s3:GetBucketLocation
+                Resource: "*"
+              -
+                Effect: Allow
+                Action:
+                  - s3:*
+                Resource:
+                - !GetAtt ArtifactS3Bucket.Arn
+                - !Sub "${ArtifactS3Bucket.Arn}/*"
+      Tags:
+        - Key: Stage
+          Value: !Ref Stage
+        - Key: Project Name
+          Value: !Ref ProjectName
+        - Key: ResourceGroup
+          Value: !Ref ResourceGroup
+
+  BuildProject:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: !Sub ${Stage}-${ProjectName}-${ResourceGroup}-build-project
+      ServiceRole: !GetAtt BuildProjectRole.Arn
+      TimeoutInMinutes: 60
+      Cache:
+        Type: LOCAL
+        Modes:
+          - LOCAL_DOCKER_LAYER_CACHE
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        Type: LINUX_CONTAINER
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/amazonlinux2-x86_64-standard:3.0
+        PrivilegedMode: true
+      Source:
+        Type: CODEPIPELINE
+        BuildSpec: !Sub |
+          version: 0.2
+          phases:
+            pre_build:
+              commands:
+                - pip install aws-sam-cli
+                - cd ${!deploy_script_path}
+                - chmod +x ./deploy.sh
+            build:
+              commands:
+                - ./deploy.sh
+          cache:
+            paths:
+              - '/root/.m2/**/*'
+      Tags:
+        - Key: Stage
+          Value: !Ref Stage
+        - Key: Project Name
+          Value: !Ref ProjectName
+        - Key: ResourceGroup
+          Value: !Ref ResourceGroup
+
+  CodePipeline:
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      Name:  !Sub ${Stage}-${ProjectName}-${ResourceGroup}-pipeline
+      ArtifactStore:
+        Type: S3
+        Location: !Ref ArtifactS3Bucket
+      RoleArn: !GetAtt PipelineRole.Arn
+      Stages:
+        - Name: Source
+          Actions:
+            - Name: SourceRepo
+              ActionTypeId:
+                Category: Source
+                Owner: ThirdParty
+                Provider: GitHub
+                Version: "1"
+              Configuration:
+                Owner: !Ref GitHubOwner
+                OAuthToken: !Ref GitHubOAuthToken
+                Repo: !Ref GitHubRepo
+                Branch: !Ref GitHubBranch
+                PollForSourceChanges: true
+              OutputArtifacts:
+                - Name: SourceRepo
+        - Name: BuildStack
+          Actions:
+            - Name: BuildStack
+              RunOrder: 1
+              InputArtifacts:
+                - Name: SourceRepo
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: "1"
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref BuildProject
+                EnvironmentVariables: >-
+                  [
+                  {"name":"deploy_script_path","value":"stack1"}
+                  ]
+      Tags:
+        - Key: Stage
+          Value: !Ref Stage
+        - Key: Project Name
+          Value: !Ref ProjectName
+        - Key: ResourceGroup
+          Value: !Ref ResourceGroup
