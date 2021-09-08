@@ -3,9 +3,9 @@ set -e
 
 STAGE="test"
 PROJECT_NAME="tc"
-RESOURCE_GROUP="pipeline"
+RESOURCE_GROUP="stack1"
 STACK_NAME="${STAGE}-${PROJECT_NAME}-${RESOURCE_GROUP}"
-BUCKET_NAME="${STACK_NAME}-artifacts-store"
+BUCKET_NAME="test-tc-pipeline-artifacts-store"
 #SECURITY_GROUP_ID="sg-042fe4977cec8fce5"
 #SUBNET_LIST="subnet-cf6b85a9"
 REGION="ap-southeast-2"
