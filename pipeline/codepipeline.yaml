@@ -184,21 +184,22 @@ Resources:
         Image: aws/codebuild/amazonlinux2-x86_64-standard:3.0
         PrivilegedMode: true
       Source:
-        Type: CODEPIPELINE
-        BuildSpec: !Sub |
-          version: 0.2
-          phases:
-            install:
-              runtime-versions:
-                python: 3.8
-              commands:
-               - pip install pytest
-            build:
-              commands:
-                - python -m pytest tests/
-          cache:
-            paths:
-              - '/root/.m2/**/*'
+        Type: GITHUB
+        BuildSpec: ./pipeline/buildspec.yaml
+#        BuildSpec: !Sub |
+#          version: 0.2
+#          phases:
+#            install:
+#              runtime-versions:
+#                python: 3.8
+#              commands:
+#               - pip install pytest
+#            build:
+#              commands:
+#                - python -m pytest tests/
+#          cache:
+#            paths:
+#              - '/root/.m2/**/*'
       Tags:
         - Key: Stage
           Value: !Ref Stage
@@ -276,7 +277,7 @@ Resources:
                 - Name: SourceRepo
 
         # 2: Run unit tests
-        - Name: BuildTests
+        - Name: Tests
           Actions:
             - Name: BuildTests
               RunOrder: 1
@@ -289,9 +290,9 @@ Resources:
                 Provider: CodeBuild
               Configuration:
                 ProjectName: !Ref BuildTests
-#
+
         # 3: Build stack1
-        - Name: BuildStack
+        - Name: Stack1
           Actions:
             - Name: BuildStack
               RunOrder: 1
