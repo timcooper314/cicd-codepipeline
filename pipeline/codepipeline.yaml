@@ -184,8 +184,21 @@ Resources:
         Image: aws/codebuild/amazonlinux2-x86_64-standard:3.0
         PrivilegedMode: true
       Source:
-        Type: GITHUB
-        BuildSpec: ./tests/tests-buildspec.yaml
+        Type: CODEPIPELINE
+        BuildSpec: !Sub |
+          version: 0.2
+          phases:
+            install:
+              runtime-versions:
+                python: 3.8
+              commands:
+               - pip install pytest
+            build:
+              commands:
+                - python -m pytest tests/
+          cache:
+            paths:
+              - '/root/.m2/**/*'
       Tags:
         - Key: Stage
           Value: !Ref Stage
@@ -212,8 +225,21 @@ Resources:
         Image: aws/codebuild/amazonlinux2-x86_64-standard:3.0
         PrivilegedMode: true
       Source:
-        Type: GITHUB
-        BuildSpec: ./stack1/stack1-buildspec.yaml
+        Type: CODEPIPELINE
+        BuildSpec: !Sub |
+          version: 0.2
+          phases:
+            pre_build:
+              commands:
+                - pip install awscli aws-sam-cli
+                - cd ${!deploy_script_path}
+                - chmod +x ./deploy.sh
+            build:
+              commands:
+                - ./deploy.sh
+          cache:
+            paths:
+              - '/root/.m2/**/*'
       Tags:
         - Key: Stage
           Value: !Ref Stage
