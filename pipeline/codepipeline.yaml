@@ -80,7 +80,9 @@ Resources:
                 Effect: Allow
                 Action:
                   - codebuild:*
-                Resource: !Sub arn:aws:codebuild:${AWS::Region}:${AWS::AccountId}:project/${Stage}-${ProjectName}-${ResourceGroup}-build-project # Codepipeline not yet created, but requires the role
+                Resource:
+                  - !Sub arn:aws:codebuild:${AWS::Region}:${AWS::AccountId}:project/${Stage}-${ProjectName}-${ResourceGroup}-build-project # Codebuilds not yet created, but requires the role
+                  - !Sub arn:aws:codebuild:${AWS::Region}:${AWS::AccountId}:project/${Stage}-${ProjectName}-${ResourceGroup}-build-tests
               -
                 Effect: Allow
                 Action:
