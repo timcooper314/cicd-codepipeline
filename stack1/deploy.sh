@@ -16,7 +16,7 @@ sam package \
   --template-file ./stack1.yaml \
   --output-template-file stack1Deploy.yaml \
   --s3-bucket ${BUCKET_NAME} \
-#  --s3-prefix "${STACK_NAME}"
+  --s3-prefix "${STACK_NAME}"
 echo "Build exit code = $?"
 test "$?" -ne 0 && exit $? || echo "Build completed successfully"
 
@@ -27,7 +27,7 @@ sam deploy \
   --parameter-overrides Stage=${STAGE} ProjectName=${PROJECT_NAME} ResourceGroup=${RESOURCE_GROUP} \
   --s3-bucket "${BUCKET_NAME}" \
   --capabilities CAPABILITY_NAMED_IAM \
-  --no-fail-on-empty-changeset
-#  --s3-prefix "${STACK_NAME}" \
-#  --tags Stage=${STAGE} ProjectName=${PROJECT_NAME} ResourceGroup=${RESOURCE_GROUP} \
-#  --region ${REGION}
+  --no-fail-on-empty-changeset \
+  --s3-prefix "${STACK_NAME}" \
+  --tags Stage=${STAGE} ProjectName=${PROJECT_NAME} ResourceGroup=${RESOURCE_GROUP} \
+  --region ${REGION}
