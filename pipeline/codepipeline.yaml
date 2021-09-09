@@ -166,6 +166,47 @@ Resources:
         - Key: ResourceGroup
           Value: !Ref ResourceGroup
 
+  BuildTests:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: !Sub ${Stage}-${ProjectName}-${ResourceGroup}-build-tests
+      ServiceRole: !GetAtt BuildProjectRole.Arn
+      TimeoutInMinutes: 60
+      Cache:
+        Type: LOCAL
+        Modes:
+          - LOCAL_DOCKER_LAYER_CACHE
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        Type: LINUX_CONTAINER
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/amazonlinux2-x86_64-standard:3.0
+        PrivilegedMode: true
+      Source:
+        Type: CODEPIPELINE
+        BuildSpec: !Sub |
+          version: 0.2
+          phases:
+            install:
+              runtime-versions:
+                python: 3.8
+              commands:
+               - pip install pytest
+            build:
+              commands:
+                - python -m pytest tests/
+          cache:
+            paths:
+              - '/root/.m2/**/*'
+      Tags:
+        - Key: Stage
+          Value: !Ref Stage
+        - Key: Project Name
+          Value: !Ref ProjectName
+        - Key: ResourceGroup
+          Value: !Ref ResourceGroup
+
   BuildProject:
     Type: AWS::CodeBuild::Project
     Properties:
@@ -190,7 +231,7 @@ Resources:
           phases:
             pre_build:
               commands:
-                - pip install aws-sam-cli
+                - pip install awscli aws-sam-cli
                 - cd ${!deploy_script_path}
                 - chmod +x ./deploy.sh
             build:
@@ -216,22 +257,40 @@ Resources:
         Location: !Ref ArtifactS3Bucket
       RoleArn: !GetAtt PipelineRole.Arn
       Stages:
+        # 1: Retrieve source code from repo
         - Name: Source
           Actions:
             - Name: SourceRepo
               ActionTypeId:
                 Category: Source
-                Owner: ThirdParty
-                Provider: GitHub
+                Owner: ThirdParty  # AWS
+                Provider: GitHub  # CodeCommit
                 Version: "1"
               Configuration:
-                Owner: !Ref GitHubOwner
-                OAuthToken: !Ref GitHubOAuthToken
+                Owner: !Ref GitHubOwner #
+                OAuthToken: !Ref GitHubOAuthToken  #
                 Repo: !Ref GitHubRepo
                 Branch: !Ref GitHubBranch
                 PollForSourceChanges: true
               OutputArtifacts:
                 - Name: SourceRepo
+
+        # 2: Run unit tests
+        - Name: BuildTests
+          Actions:
+            - Name: BuildTests
+              RunOrder: 1
+              InputArtifacts:
+                - Name: SourceRepo
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: "1"
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref BuildTests
+#
+        # 3: Build stack1
         - Name: BuildStack
           Actions:
             - Name: BuildStack
