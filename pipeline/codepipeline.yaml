@@ -35,7 +35,7 @@ Resources:
   ArtifactS3Bucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Sub ${Stage}-${ProjectName}-${ResourceGroup}-artifacts-store
+      BucketName: !Sub ${Stage}-${ProjectName}-${ResourceGroup}-artifacts
       Tags:
         - Key: Stage
           Value: !Ref Stage
